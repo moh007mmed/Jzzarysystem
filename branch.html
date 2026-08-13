@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شاشة الفرع | مؤسسة جزّاري</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2 { color: #d9534f; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .form-section { margin-bottom: 25px; padding: 15px; background: #f9f9f9; border-radius: 8px; }
+        .form-section h3 { margin-top: 0; color: #333; }
+        .input-group { display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center; }
+        .input-group label { flex: 1; font-weight: bold; }
+        .input-group input, .input-group select { flex: 2; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .btn-submit { background-color: #5cb85c; color: white; border: none; padding: 12px 20px; width: 100%; font-size: 18px; border-radius: 5px; cursor: pointer; }
+        .btn-submit:hover { background-color: #4cae4c; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🥩 مؤسسة جزّاري - الجزارة الأولى (إغلاق اليومية)</h2>
+    
+    <form action="#" method="POST">
+        <!-- قسم المبيعات -->
+        <div class="form-section">
+            <h3>💰 المبيعات النقدية</h3>
+            <div class="input-group">
+                <label>إجمالي الكاش:</label>
+                <input type="number" placeholder="أدخل مبلغ الكاش هنا" required>
+            </div>
+            <div class="input-group">
+                <label>إجمالي التحويلات البنكية:</label>
+                <input type="number" placeholder="أدخل مبلغ التحويلات هنا" required>
+            </div>
+        </div>
+
+        <!-- قسم اللحوم والمتبقي -->
+        <div class="form-section">
+            <h3>⚖️ جرد اللحوم (المتبقي آخر اليوم)</h3>
+            <div class="input-group">
+                <label>لحم عجالي (بالكيلو):</label>
+                <input type="number" placeholder="المتبقي من العجالي">
+            </div>
+            <div class="input-group">
+                <label>لحم ضأن (بالكيلو):</label>
+                <input type="number" placeholder="المتبقي من الضأن">
+            </div>
+            <div class="input-group">
+                <label>صافي وكبدة (بالكيلو):</label>
+                <input type="number" placeholder="المتبقي من الكبدة والصافي">
+            </div>
+        </div>
+
+        <!-- قسم التحويلات -->
+        <div class="form-section">
+            <h3>🔄 التحويلات للجزارات الأخرى</h3>
+            <div class="input-group">
+                <label>تحويل إلى:</label>
+                <select>
+                    <option value="">-- اختر الجزارة --</option>
+                    <option value="2">الجزارة الثانية</option>
+                    <option value="3">الجزارة الثالثة</option>
+                    <option value="4">الجزارة الرابعة</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>التفاصيل:</label>
+                <input type="text" placeholder="مثال: 10 كيلو ضأن أو 50 ألف كاش">
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit">إرسال اليومية للمشرف العام</button>
+    </form>
+</div>
+
+</body>
+</html>
