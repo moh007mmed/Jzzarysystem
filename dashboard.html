@@ -3,99 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة المشرف العام | مؤسسة جزّاري</title>
+    <title>لوحة القيادة | مؤسسة جزّاري</title>
+    <!-- استدعاء مكتبة Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f5; margin: 0; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: #34495e; color: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
-        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
-        .card h3 { margin: 0 0 10px; color: #7f8c8d; font-size: 16px; }
-        .card .number { font-size: 28px; font-weight: bold; color: #2c3e50; }
-        .card.success .number { color: #27ae60; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f3; margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: #2c3e50; color: white; padding: 15px 30px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header h1 { margin: 0; font-size: 24px; }
+        .btn-refresh { background-color: #f39c12; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        .btn-refresh:hover { background-color: #e67e22; }
         
-        table { width: 100%; background: white; border-collapse: collapse; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
-        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #ddd; }
-        th { background-color: #2980b9; color: white; }
-        tr:hover { background-color: #f1f1f1; }
-        .status-ok { background-color: #d4edda; color: #155724; padding: 5px 10px; border-radius: 4px; }
-        .status-pending { background-color: #fff3cd; color: #856404; padding: 5px 10px; border-radius: 4px; }
+        /* بطاقات الإحصائيات */
+        .summary-cards { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+        .card { flex: 1; min-width: 200px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #3498db; }
+        .card h3 { margin: 0 0 10px 0; color: #7f8c8d; font-size: 18px; }
+        .card .amount { font-size: 28px; font-weight: bold; color: #2c3e50; }
+        .card.cash { border-bottom-color: #27ae60; }
+        .card.bankak { border-bottom-color: #9b59b6; }
+        .card.expenses { border-bottom-color: #e74c3c; }
+
+        /* جدول التقارير */
+        .table-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ecf0f1; padding: 12px; text-align: center; }
+        th { background-color: #34495e; color: white; font-weight: normal; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:hover { background-color: #f1f2f6; }
+        .empty-msg { text-align: center; color: #95a5a6; padding: 20px; font-size: 18px; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h2>👑 لوحة المشرف العام - مؤسسة جزّاري</h2>
-    <span>تاريخ اليوم: 13 أغسطس 2026</span>
-</div>
+    <div class="header">
+        <h1>📊 لوحة المشرف العام - مؤسسة جزّاري</h1>
+        <button class="btn-refresh" onclick="fetchData()">🔄 تحديث البيانات</button>
+    </div>
 
-<!-- بطاقات الإحصائيات -->
-<div class="cards">
-    <div class="card success">
-        <h3>إجمالي كاش اليوم</h3>
-        <div class="number">245,000</div>
+    <!-- الإحصائيات السريعة -->
+    <div class="summary-cards">
+        <div class="card cash">
+            <h3>إجمالي الكاش بالدرج</h3>
+            <div class="amount" id="totalCash">0</div>
+        </div>
+        <div class="card bankak">
+            <h3>إجمالي تحويلات بنكك</h3>
+            <div class="amount" id="totalBankak">0</div>
+        </div>
+        <div class="card expenses">
+            <h3>إجمالي المنصرفات</h3>
+            <div class="amount" id="totalExpenses">0</div>
+        </div>
     </div>
-    <div class="card success">
-        <h3>إجمالي التحويلات البنكية</h3>
-        <div class="number">120,000</div>
-    </div>
-    <div class="card">
-        <h3>متبقي العجالي (كيلو)</h3>
-        <div class="number">45</div>
-    </div>
-    <div class="card">
-        <h3>حالة التحويلات بين الفروع</h3>
-        <div class="number" style="color: #e67e22;">2 معلقة</div>
-    </div>
-</div>
 
-<!-- جدول ملخص الفروع -->
-<h3>📊 ملخص الفروع لهذا اليوم</h3>
-<table>
-    <thead>
-        <tr>
-            <th>الفرع</th>
-            <th>مشرف الفرع</th>
-            <th>إجمالي الكاش</th>
-            <th>إجمالي البنك</th>
-            <th>تحويلات داخلية</th>
-            <th>حالة اليومية</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>الجزارة الأولى</td>
-            <td>أحمد</td>
-            <td>60,000</td>
-            <td>30,000</td>
-            <td>-</td>
-            <td><span class="status-ok">مغلقة ومستلمة</span></td>
-        </tr>
-        <tr>
-            <td>الجزارة الثانية</td>
-            <td>محمود</td>
-            <td>75,000</td>
-            <td>40,000</td>
-            <td>استلم 10 كيلو من الأولى</td>
-            <td><span class="status-ok">مغلقة ومستلمة</span></td>
-        </tr>
-        <tr>
-            <td>الجزارة الثالثة</td>
-            <td>عمر</td>
-            <td>55,000</td>
-            <td>25,000</td>
-            <td>-</td>
-            <td><span class="status-pending">قيد العمل</span></td>
-        </tr>
-        <tr>
-            <td>الجزارة الرابعة</td>
-            <td>حسن</td>
-            <td>55,000</td>
-            <td>25,000</td>
-            <td>أرسل 50 ألف للثالثة</td>
-            <td><span class="status-pending">قيد العمل</span></td>
-        </tr>
-    </tbody>
-</table>
+    <!-- جدول عرض اليوميات -->
+    <div class="table-container">
+        <h2 style="margin-top: 0; color: #2c3e50;">📑 أحدث التقارير اليومية</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>تاريخ التقرير</th>
+                    <th>الفرع</th>
+                    <th>الكاش الفعلي</th>
+                    <th>تحويلات بنكك</th>
+                    <th>المنصرفات</th>
+                    <th>ملاحظات الكاش</th>
+                </tr>
+            </thead>
+            <tbody id="reportsTableBody">
+                <tr><td colspan="6" class="empty-msg">جاري تحميل البيانات...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+<script>
+    // إعدادات الاتصال بـ Supabase (بنفس المفاتيح السابقة)
+    const SUPABASE_URL = 'https://jhfopsgvbrecaljqthd.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_gu2BrTYNmEI2vXMi_A3qOg_DodqgZQ0';
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // دالة جلب البيانات من قاعدة البيانات
+    async function fetchData() {
+        const tbody = document.getElementById('reportsTableBody');
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-msg">جاري تحديث البيانات... ⏳</td></tr>';
+
+        // جلب البيانات وترتيبها من الأحدث للأقدم
+        const { data, error } = await supabaseClient
+            .from('daily_reports')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching data:', error);
+            tbody.innerHTML = `<tr><td colspan="6" class="empty-msg" style="color:red;">حدث خطأ في جلب البيانات: ${error.message}</td></tr>`;
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-msg">لا توجد تقارير مسجلة حتى الآن.</td></tr>';
+            // تصفير العدادات
+            document.getElementById('totalCash').textContent = '0';
+            document.getElementById('totalBankak').textContent = '0';
+            document.getElementById('totalExpenses').textContent = '0';
+            return;
+        }
+
+        // متغيرات لحساب الإجماليات
+        let sumCash = 0;
+        let sumBankak = 0;
+        let sumExpenses = 0;
+
+        tbody.innerHTML = ''; // تفريغ الجدول للبيانات الجديدة
+
+        // بناء صفوف الجدول وحساب الإجماليات
+        data.forEach(report => {
+            // حساب إجمالي بنكك لهذا التقرير
+            let reportBankakTotal = 0;
+            if (report.bankak_data && Array.isArray(report.bankak_data)) {
+                report.bankak_data.forEach(tx => {
+                    reportBankakTotal += (parseFloat(tx.amount) || 0);
+                });
+            }
+
+            // حساب إجمالي منصرفات هذا التقرير
+            let reportExpensesTotal = 0;
+            if (report.expenses) {
+                reportExpensesTotal = (parseFloat(report.expenses.bags) || 0) + 
+                                      (parseFloat(report.expenses.hospitality) || 0) + 
+                                      (parseFloat(report.expenses.transport) || 0) + 
+                                      (parseFloat(report.expenses.other) || 0);
+            }
+
+            // إضافة للعداد العام
+            sumCash += (parseFloat(report.actual_cash) || 0);
+            sumBankak += reportBankakTotal;
+            sumExpenses += reportExpensesTotal;
+
+            // إنشاء صف في الجدول
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${report.report_date}</strong></td>
+                <td>${report.branch_name}</td>
+                <td style="color:#27ae60; font-weight:bold;">${(parseFloat(report.actual_cash) || 0).toLocaleString()}</td>
+                <td style="color:#9b59b6; font-weight:bold;">${reportBankakTotal.toLocaleString()}</td>
+                <td style="color:#e74c3c; font-weight:bold;">${reportExpensesTotal.toLocaleString()}</td>
+                <td style="font-size: 14px; color: #7f8c8d;">${report.cash_notes || '-'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // تحديث أرقام البطاقات العلوية
+        document.getElementById('totalCash').textContent = sumCash.toLocaleString();
+        document.getElementById('totalBankak').textContent = sumBankak.toLocaleString();
+        document.getElementById('totalExpenses').textContent = sumExpenses.toLocaleString();
+    }
+
+    // جلب البيانات فور فتح الصفحة
+    window.onload = fetchData;
+</script>
 
 </body>
 </html>
