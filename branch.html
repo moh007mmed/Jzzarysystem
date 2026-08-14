@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إغلاق اليومية - شاشة الجزارة | مؤسسة جزّاري</title>
+    <!-- استدعاء مكتبة Supabase للربط السريع -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
         .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
@@ -11,19 +13,13 @@
         .date-display { font-size: 16px; color: #7f8c8d; font-weight: normal; }
         .section { background: #fdfdfd; border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .section-title { margin-top: 0; color: #d9534f; font-size: 18px; margin-bottom: 15px; }
-        
-        /* تنسيق الجداول والمدخلات */
         .input-group { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 10px; align-items: center; }
         .input-group input, .input-group select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; flex: 1; min-width: 120px; }
         .input-label { min-width: 150px; font-weight: bold; color: #333; }
-        
-        /* أزرار الإضافة والإرسال */
         .btn-add { background-color: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-top: 10px; }
         .btn-add:hover { background-color: #2980b9; }
         .btn-submit { background-color: #27ae60; color: white; border: none; padding: 15px 20px; width: 100%; font-size: 20px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px; }
         .btn-submit:hover { background-color: #2ecc71; }
-
-        /* تنسيق جرد اللحوم */
         table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background-color: #f2f2f2; color: #333; }
@@ -35,25 +31,39 @@
 <div class="container">
     <h2>
         <span>🔪 إغلاق اليومية - الجزارة</span>
-        <span class="date-display">تاريخ اليوم: <span id="currentDate"></span></span>
+        <span class="date-display">تاريخ اليوم: <span id="currentDateText"></span></span>
     </h2>
     
-    <form action="#" method="POST">
+    <form id="branchForm">
         
+        <!-- تحديد اسم الجزارة -->
+        <div class="section">
+            <h3 class="section-title">📍 بيانات الفرع</h3>
+            <div class="input-group">
+                <span class="input-label">اسم الجزارة:</span>
+                <select id="branchName" required>
+                    <option value="">-- اختر الجزارة --</option>
+                    <option value="فرع الرئيسي">الفرع الرئيسي</option>
+                    <option value="فرع 2">الجزارة الثانية</option>
+                    <option value="فرع 3">الجزارة الثالثة</option>
+                </select>
+            </div>
+        </div>
+
         <!-- قسم بنكك -->
         <div class="section">
             <h3 class="section-title">📱 مبيعات بنكك (تفصيلية)</h3>
             <div id="bankak-container">
                 <div class="input-group">
-                    <select name="bankak_category[]">
+                    <select class="bankak-cat">
                         <option value="عجالي">لحم عجالي</option>
                         <option value="ضأن">لحم ضأن</option>
                         <option value="فراخ">فراخ</option>
                         <option value="كبدة_صافي">كبدة / صافي</option>
                         <option value="منتجات">منتجات (كوارع، سجق..)</option>
                     </select>
-                    <input type="text" name="bankak_ref[]" placeholder="آخر 4 أرقام من العملية" required>
-                    <input type="number" name="bankak_amount[]" placeholder="المبلغ" required>
+                    <input type="text" class="bankak-ref" placeholder="آخر 4 أرقام من العملية" required>
+                    <input type="number" class="bankak-amt" placeholder="المبلغ" required>
                 </div>
             </div>
             <button type="button" class="btn-add" onclick="addBankakRow()">+ إضافة عملية بنكك أخرى</button>
@@ -64,20 +74,20 @@
             <h3 class="section-title">💵 تفاصيل الكاش (ملاحظات ومبالغ)</h3>
             <div class="input-group">
                 <span class="input-label">ملاحظات الكبدة/الصافي:</span>
-                <input type="text" placeholder="مثال: ¼ * 12 أو مبالغ الكبدة">
+                <input type="text" id="cashNotes" placeholder="مثال: ¼ * 12 أو مبالغ الكبدة">
             </div>
             <div class="input-group">
                 <span class="input-label">مبيعات المنتجات كاش:</span>
-                <input type="text" placeholder="اكتب المبالغ (مثال: 5000 كوارع، 3000 سجق)">
+                <input type="text" id="productsCash" placeholder="اكتب المبالغ (مثال: 5000 كوارع، 3000 سجق)">
             </div>
             <div class="input-group">
                 <span class="input-label">سداد ديون قديمة (داخل):</span>
-                <input type="number" placeholder="إجمالي الديون المسددة كاش">
+                <input type="number" id="debtRepayment" value="0" placeholder="إجمالي الديون المسددة كاش">
             </div>
             <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
             <div class="input-group">
                 <span class="input-label" style="color: #27ae60; font-size: 18px;">💰 إجمالي الكاش الفعلي بالدرج:</span>
-                <input type="number" placeholder="قم بعد الكاش واكتب الرقم هنا" required style="font-size: 18px; font-weight: bold; color: #27ae60; border-color: #27ae60;">
+                <input type="number" id="actualCash" placeholder="قم بعد الكاش واكتب الرقم هنا" required style="font-size: 18px; font-weight: bold; color: #27ae60; border-color: #27ae60;">
             </div>
         </div>
 
@@ -85,14 +95,14 @@
         <div class="section">
             <h3 class="section-title">💸 المنصرفات (خارج من الدرج)</h3>
             <div class="input-group">
-                <input type="number" placeholder="أكياس">
-                <input type="number" placeholder="ضيافة">
-                <input type="number" placeholder="ترحيل">
-                <input type="number" placeholder="منصرفات أخرى">
+                <input type="number" id="expBags" value="0" placeholder="أكياس">
+                <input type="number" id="expHosp" value="0" placeholder="ضيافة">
+                <input type="number" id="expTrans" value="0" placeholder="ترحيل">
+                <input type="number" id="expOther" value="0" placeholder="منصرفات أخرى">
             </div>
         </div>
 
-        <!-- قسم الجرد (مستلم ومتبقي) -->
+        <!-- قسم الجرد -->
         <div class="section">
             <h3 class="section-title">⚖️ جرد اللحوم والمنتجات</h3>
             <table>
@@ -106,23 +116,23 @@
                 <tbody>
                     <tr>
                         <td>لحم عجالي (كجم)</td>
-                        <td><input type="number" step="0.1"></td>
-                        <td><input type="number" step="0.1"></td>
+                        <td><input type="number" step="0.1" id="inv_agali_rec" value="0"></td>
+                        <td><input type="number" step="0.1" id="inv_agali_rem" value="0"></td>
                     </tr>
                     <tr>
                         <td>لحم ضأن (كجم)</td>
-                        <td><input type="number" step="0.1"></td>
-                        <td><input type="number" step="0.1"></td>
+                        <td><input type="number" step="0.1" id="inv_dhan_rec" value="0"></td>
+                        <td><input type="number" step="0.1" id="inv_dhan_rem" value="0"></td>
                     </tr>
                     <tr>
                         <td>فراخ</td>
-                        <td><input type="number" step="0.1"></td>
-                        <td><input type="number" step="0.1"></td>
+                        <td><input type="number" step="0.1" id="inv_chicken_rec" value="0"></td>
+                        <td><input type="number" step="0.1" id="inv_chicken_rem" value="0"></td>
                     </tr>
                     <tr>
                         <td>منتجات (كوارع/سجق/كمونية)</td>
-                        <td><input type="text" placeholder="الكمية المستلمة"></td>
-                        <td><input type="text" placeholder="الكمية المتبقية"></td>
+                        <td><input type="text" id="inv_prod_rec" placeholder="الكمية المستلمة"></td>
+                        <td><input type="text" id="inv_prod_rem" placeholder="الكمية المتبقية"></td>
                     </tr>
                 </tbody>
             </table>
@@ -132,47 +142,113 @@
         <div class="section">
             <h3 class="section-title">🔄 التحويلات إلى جزارات أخرى</h3>
             <div class="input-group">
-                <select>
-                    <option value="">-- اختر الجزارة المحول إليها --</option>
-                    <option>الجزارة الثانية</option>
-                    <option>الجزارة الثالثة</option>
-                    <option>الجزارة الرابعة</option>
+                <select id="transferBranch">
+                    <option value="">-- اختر الفرع المحول إليه --</option>
+                    <option value="الجزارة الثانية">الجزارة الثانية</option>
+                    <option value="الجزارة الثالثة">الجزارة الثالثة</option>
                 </select>
-                <input type="text" placeholder="الصنف (مثال: لحم عجالي)">
-                <input type="number" placeholder="الكمية">
+                <input type="text" id="transferItem" placeholder="الصنف (مثال: لحم عجالي)">
+                <input type="number" id="transferQty" placeholder="الكمية">
             </div>
         </div>
 
-        <button type="submit" class="btn-submit">📤 إرسال التقرير للمشرف العام</button>
+        <button type="submit" class="btn-submit" id="submitBtn">📤 إرسال التقرير للمشرف العام</button>
     </form>
 </div>
 
-<!-- كود جافاسكريبت لإضافة عمليات بنكك وعرض التاريخ -->
 <script>
-    // عرض تاريخ اليوم تلقائياً
-    const dateElement = document.getElementById('currentDate');
-    const today = new Date();
-    dateElement.textContent = today.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+    // إعدادات الاتصال بـ Supabase
+    const SUPABASE_URL = 'https://jhfopsgvbrecaljqthd.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_gu2BrTYNmEI2vXMi_A3qOg_DodqgZQ0';
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // دالة لإضافة صف جديد لعمليات بنكك
+    // تاريخ اليوم
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+    document.getElementById('currentDateText').textContent = today.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+
     function addBankakRow() {
         const container = document.getElementById('bankak-container');
         const row = document.createElement('div');
         row.className = 'input-group';
         row.innerHTML = `
-            <select name="bankak_category[]">
+            <select class="bankak-cat">
                 <option value="عجالي">لحم عجالي</option>
                 <option value="ضأن">لحم ضأن</option>
                 <option value="فراخ">فراخ</option>
                 <option value="كبدة_صافي">كبدة / صافي</option>
                 <option value="منتجات">منتجات (كوارع، سجق..)</option>
             </select>
-            <input type="text" name="bankak_ref[]" placeholder="آخر 4 أرقام من العملية" required>
-            <input type="number" name="bankak_amount[]" placeholder="المبلغ" required>
+            <input type="text" class="bankak-ref" placeholder="آخر 4 أرقام من العملية" required>
+            <input type="number" class="bankak-amt" placeholder="المبلغ" required>
             <button type="button" class="btn-add" style="background-color: #e74c3c; margin-top:0;" onclick="this.parentElement.remove()">حذف</button>
         `;
         container.appendChild(row);
     }
+
+    // إرسال البيانات لقاعدة البيانات عند الضغط على زر الإرسال
+    document.getElementById('branchForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'جاري الإرسال...';
+
+        // تجميع بيانات بنكك
+        const bankakRows = [];
+        document.querySelectorAll('#bankak-container .input-group').forEach(group => {
+            bankakRows.push({
+                category: group.querySelector('.bankak-cat').value,
+                ref: group.querySelector('.bankak-ref').value,
+                amount: parseFloat(group.querySelector('.bankak-amt').value) || 0
+            });
+        });
+
+        // تجميع البيانات
+        const reportData = {
+            report_date: formattedDate,
+            branch_name: document.getElementById('branchName').value,
+            bankak_data: bankakRows,
+            cash_notes: document.getElementById('cashNotes').value,
+            products_cash: document.getElementById('productsCash').value,
+            debt_repayment: parseFloat(document.getElementById('debtRepayment').value) || 0,
+            actual_cash: parseFloat(document.getElementById('actualCash').value) || 0,
+            expenses: {
+                bags: parseFloat(document.getElementById('expBags').value) || 0,
+                hospitality: parseFloat(document.getElementById('expHosp').value) || 0,
+                transport: parseFloat(document.getElementById('expTrans').value) || 0,
+                other: parseFloat(document.getElementById('expOther').value) || 0
+            },
+            inventory: {
+                agali: { received: document.getElementById('inv_agali_rec').value, remaining: document.getElementById('inv_agali_rem').value },
+                dhan: { received: document.getElementById('inv_dhan_rec').value, remaining: document.getElementById('inv_dhan_rem').value },
+                chicken: { received: document.getElementById('inv_chicken_rec').value, remaining: document.getElementById('inv_chicken_rem').value },
+                products: { received: document.getElementById('inv_prod_rec').value, remaining: document.getElementById('inv_prod_rem').value }
+            },
+            transfers: {
+                target_branch: document.getElementById('transferBranch').value,
+                item: document.getElementById('transferItem').value,
+                qty: document.getElementById('transferQty').value
+            }
+        };
+
+        // رفع البيانات لـ Supabase
+        const { data, error } = await supabaseClient
+            .from('daily_reports')
+            .insert([reportData]);
+
+        if (error) {
+            alert('حدث خطأ أثناء الإرسال: ' + error.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = '📤 إرسال التقرير للمشرف العام';
+        } else {
+            alert('🎉 تم إرسال اليومية بنجاح إلى قاعدة البيانات!');
+            document.getElementById('branchForm').reset();
+            submitBtn.disabled = false;
+            submitBtn.textContent = '📤 إرسال التقرير للمشرف العام';
+        }
+    });
 </script>
 
 </body>
